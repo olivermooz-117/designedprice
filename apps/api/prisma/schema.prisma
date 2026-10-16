@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ScanStatus {
+  PROCESSING
+  COMPLETED
+  NO_COMPARABLES
+  FAILED
+}
+
+enum MarketPlatform {
+  EBAY
+  GOOGLE_SHOPPING
+  GRAILED
+  DEPOP
+  OTHER
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String?
+  displayName  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  scans        Scan[]
+
+  @@map("users")
+}
+
+model Scan {
+  id                String     @id @default(uuid()) @db.Uuid
+  userId            String     @db.Uuid
+  imageUrl          String
+  status            ScanStatus @default(PROCESSING)
+  brand             String?
+  garmentType       String?
+  searchQueryString String?
+  geminiModel       String?
+  rawGeminiResponse Json?
+  errorMessage      String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  valuation Valuation?
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([brand])
+  @@map("scans")
+}
+
+model Valuation {
+  id                 String   @id @default(uuid()) @db.Uuid
+  scanId             String   @unique @db.Uuid
+  estimatedLowPrice  Decimal  @db.Decimal(10, 2)
+  estimatedHighPrice Decimal  @db.Decimal(10, 2)
+  medianPrice        Decimal  @db.Decimal(10, 2)
+  currency           String   @default("USD") @db.VarChar(3)
+  confidenceScore    Float
+  suggestedEra       String
+  queryUsed          String
+  createdAt          DateTime @default(now())
+
+  scan        Scan               @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  comparables MarketComparable[]
+
+  @@map("valuations")
+}
+
+model MarketComparable {
+  id          String         @id @default(uuid()) @db.Uuid
+  valuationId String         @db.Uuid
+  platform    MarketPlatform
+  itemUrl     String
+  price       Decimal        @db.Decimal(10, 2)
+  currency    String         @default("USD") @db.VarChar(3)
+  title       String
+  thumbnail   String?
+  createdAt   DateTime       @default(now())
+
+  valuation Valuation @relation(fields: [valuationId], references: [id], onDelete: Cascade)
+
+  @@index([valuationId])
+  @@map("market_comparables")
+}
