@@ -1,3 +1,16 @@
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  token: string;
+  tokenType: "Bearer";
+  expiresIn: number;
+}
+
 export interface ScanResponse {
   id: string;
   status: "PROCESSING" | "COMPLETED" | "NO_COMPARABLES" | "FAILED";

@@ -1,29 +1,133 @@
-import type { ScanResponse } from "./types";
+import type { AuthResponse, ScanResponse } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-const TOKEN = process.env.NEXT_PUBLIC_JWT_TOKEN ?? "";
+const TOKEN_KEY = "designedprice_session_token";
 
-async function post(body: object): Promise<ScanResponse> {
-  const res = await fetch(`${API_URL}/api/v1/scans/analyze`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${TOKEN}`,
-    },
-    body: JSON.stringify(body),
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(TOKEN_KEY);
+}
+
+function saveToken(token: string): void {
+  if (typeof window === "undefined") {
+    throw new Error("Authentication is only available in the browser.");
+  }
+  window.sessionStorage.setItem(TOKEN_KEY, token);
+}
+
+export function logout(): void {
+  if (typeof window !== "undefined") {
+    window.sessionStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+export function hasSession(): boolean {
+  return getToken() !== null;
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  authenticated = false,
+): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (options.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (authenticated) {
+    const token = getToken();
+    if (!token) {
+      throw new Error("Please log in to continue.");
+    }
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
   });
 
-  const json = await res.json();
-  if (!res.ok) {
-    throw new Error(json?.error?.message ?? `Request failed (${res.status})`);
+  const json = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    if (response.status === 401 && authenticated) {
+      logout();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("designedprice:session-expired"));
+      }
+    }
+    throw new Error(
+      json?.error?.message ?? `Request failed (${response.status})`,
+    );
   }
-  return json.data as ScanResponse;
+
+  return json as T;
 }
 
-export function analyzeImage(imageUrl: string) {
-  return post({ imageUrl });
+async function authenticate(
+  action: "register" | "login",
+  input: { email: string; password: string; displayName?: string },
+): Promise<AuthResponse> {
+  const result = await request<{ data: AuthResponse }>(
+    `/api/v1/auth/${action}`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+  saveToken(result.data.token);
+  return result.data;
 }
 
-export function analyzeBase64(imageBase64: string, mimeType: string) {
-  return post({ imageBase64, mimeType });
+export function register(input: {
+  email: string;
+  password: string;
+  displayName?: string;
+}): Promise<AuthResponse> {
+  return authenticate("register", input);
+}
+
+export function login(input: {
+  email: string;
+  password: string;
+}): Promise<AuthResponse> {
+  return authenticate("login", input);
+}
+
+export async function analyzeImage(imageUrl: string): Promise<ScanResponse> {
+  const result = await request<{ data: ScanResponse }>(
+    "/api/v1/scans/analyze",
+    {
+      method: "POST",
+      body: JSON.stringify({ imageUrl }),
+    },
+    true,
+  );
+  return result.data;
+}
+
+export async function analyzeBase64(
+  imageBase64: string,
+  mimeType: string,
+): Promise<ScanResponse> {
+  const result = await request<{ data: ScanResponse }>(
+    "/api/v1/scans/analyze",
+    {
+      method: "POST",
+      body: JSON.stringify({ imageBase64, mimeType }),
+    },
+    true,
+  );
+  return result.data;
+}
+
+export async function getScanHistory(): Promise<ScanResponse[]> {
+  const result = await request<{ data: ScanResponse[] }>(
+    "/api/v1/scans/history",
+    { method: "GET" },
+    true,
+  );
+  return result.data;
 }

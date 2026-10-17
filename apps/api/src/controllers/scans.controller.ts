@@ -80,6 +80,33 @@ function toResponse(scan: ScanWithRelations): ScanResponse {
 const gemini = new GeminiVisionService();
 const pricing = new PricingService();
 
+export async function listScanHistory(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new AppError(401, "UNAUTHORIZED", "Authentication required.");
+    }
+
+    const scans = await prisma.scan.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: scanInclude,
+    });
+
+    res.status(200).json({
+      data: scans.map(toResponse),
+      meta: { count: scans.length, limit: 50 },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function analyzeScan(req: Request, res: Response, next: NextFunction): Promise<void> {
   let scanId: string | undefined;
 
