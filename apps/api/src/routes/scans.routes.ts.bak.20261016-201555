@@ -1,0 +1,14 @@
+import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import { requireAuth } from "../middleware/auth.js";
+import { analyzeScan } from "../controllers/scans.controller";
+
+const analyzeLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const scansRouter = Router();
+scansRouter.post("/analyze", requireAuth, analyzeLimiter, analyzeScan);

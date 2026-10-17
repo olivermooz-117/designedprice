@@ -1,6 +1,6 @@
 import "dotenv/config";
 import jwt from "jsonwebtoken";
-import { prisma } from "../src/lib/prisma";
+import { prisma } from "../src/lib/prisma.js";
 
 async function main() {
   const user = await prisma.user.upsert({
