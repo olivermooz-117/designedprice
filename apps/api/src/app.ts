@@ -8,10 +8,8 @@ import { errorHandler } from "./middleware/errorHandler";
 
 export const app = express();
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-app.use(cors({ origin: process.env.CORS_ORIGINS?.split(",") ?? false }));
+app.use(cors({ origin: process.env.CORS_ORIGINS?.split(",") ?? true }));
 app.use(express.json({ limit: "12mb" }));
-
-// Serve locally uploaded images
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
