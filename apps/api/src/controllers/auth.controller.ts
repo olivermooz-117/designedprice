@@ -1,71 +1,169 @@
 import type { NextFunction, Request, Response } from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../lib/errors";
-import { env } from "../config/env";
+import { hashPassword, verifyPassword } from "../lib/password";
 
-const CredsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  displayName: z.string().min(1).max(80).optional(),
-});
+const RegisterSchema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(10).max(128),
+  displayName: z.string().trim().min(1).max(80).optional(),
+}).strict();
 
-function signToken(userId: string) {
-  return jwt.sign({ sub: userId }, env.JWT_SECRET, { expiresIn: "30d" });
+const LoginSchema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(1).max(128),
+}).strict();
+
+function issueToken(user: { id: string; email: string }) {
+  return jwt.sign(
+    { email: user.email },
+    env.JWT_SECRET,
+    {
+      subject: user.id,
+      expiresIn: "7d",
+      issuer: "designedprice-api",
+      audience: "designedprice-web",
+    },
+  );
 }
 
-export async function register(req: Request, res: Response, next: NextFunction) {
+export async function register(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
-    const parsed = CredsSchema.safeParse(req.body);
+    const parsed = RegisterSchema.safeParse(req.body);
+
     if (!parsed.success) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid email or password.", parsed.error.flatten());
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        "Provide a valid email and a password of 10–128 characters.",
+        parsed.error.flatten(),
+      );
     }
-    const { email, password, displayName } = parsed.data;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) throw new AppError(409, "EMAIL_TAKEN", "Email already registered.");
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { email, passwordHash, displayName: displayName ?? email.split("@")[0] },
+    const email = parsed.data.email.toLowerCase();
+    const existing = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
     });
 
-    const token = signToken(user.id);
-    res.status(201).json({
+    if (existing) {
+      throw new AppError(
+        409,
+        "EMAIL_ALREADY_REGISTERED",
+        "An account with this email already exists.",
+      );
+    }
+
+    const passwordHash = await hashPassword(parsed.data.password);
+
+    const user = await prisma.user.create({
       data: {
-        token,
-        user: { id: user.id, email: user.email, displayName: user.displayName },
+        email,
+        passwordHash,
+        displayName: parsed.data.displayName || null,
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
       },
     });
-  } catch (err) {
-    next(err);
+
+    const token = issueToken(user);
+
+    res.status(201).json({
+      data: {
+        user,
+        token,
+        tokenType: "Bearer",
+        expiresIn: 604800,
+      },
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      next(
+        new AppError(
+          409,
+          "EMAIL_ALREADY_REGISTERED",
+          "An account with this email already exists.",
+        ),
+      );
+      return;
+    }
+
+    next(error);
   }
 }
 
-export async function login(req: Request, res: Response, next: NextFunction) {
+export async function login(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
-    const parsed = CredsSchema.omit({ displayName: true }).safeParse(req.body);
+    const parsed = LoginSchema.safeParse(req.body);
+
     if (!parsed.success) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid email or password.");
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        "Provide a valid email and password.",
+        parsed.error.flatten(),
+      );
     }
-    const { email, password } = parsed.data;
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user?.passwordHash) throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password.");
+    const email = parsed.data.email.toLowerCase();
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password.");
-
-    const token = signToken(user.id);
-    res.json({
-      data: {
-        token,
-        user: { id: user.id, email: user.email, displayName: user.displayName },
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        passwordHash: true,
       },
     });
-  } catch (err) {
-    next(err);
+
+    const validPassword =
+      user?.passwordHash
+        ? await verifyPassword(parsed.data.password, user.passwordHash)
+        : false;
+
+    if (!user || !validPassword) {
+      throw new AppError(
+        401,
+        "INVALID_CREDENTIALS",
+        "Invalid email or password.",
+      );
+    }
+
+    const token = issueToken(user);
+
+    res.status(200).json({
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+        },
+        token,
+        tokenType: "Bearer",
+        expiresIn: 604800,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 }

@@ -15,21 +15,30 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
   const token = match?.[1];
 
   if (!token) {
+    console.error("[auth] missing bearer token");
     return next(
       new AppError(401, "UNAUTHORIZED", "Missing or malformed bearer token."),
     );
   }
 
   try {
+    // Verify signature + expiry. Issuer/audience optional for local dev.
     const payload = jwt.verify(token, env.JWT_SECRET, {
-      issuer: "designedprice-api",
-      audience: "designedprice-web",
       algorithms: ["HS256"],
     }) as jwt.JwtPayload;
-    if (!payload.sub) throw new Error("no sub");
+
+    if (!payload.sub || typeof payload.sub !== "string") {
+      console.error("[auth] token missing sub claim", payload);
+      throw new Error("no sub");
+    }
+
     req.user = { id: payload.sub };
     next();
-  } catch {
+  } catch (err) {
+    console.error(
+      "[auth] jwt.verify failed:",
+      err instanceof Error ? err.message : err,
+    );
     next(new AppError(401, "UNAUTHORIZED", "Invalid or expired token."));
   }
 }

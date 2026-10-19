@@ -7,8 +7,17 @@ import { authRouter } from "./routes/auth.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 export const app = express();
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-app.use(cors({ origin: process.env.CORS_ORIGINS?.split(",") ?? true }));
+
+const origins = process.env.CORS_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean);
+app.use(
+  cors({
+    origin: origins && origins.length > 0 ? origins : true,
+    credentials: true,
+  }),
+);
+
 app.use(express.json({ limit: "12mb" }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
