@@ -1,6 +1,8 @@
 import { env } from "./config/env";
 import { app } from "./app";
 
-app.listen(env.PORT, () => {
-  console.log(`DesignedPrice API listening on http://localhost:${env.PORT}`);
+const port = env.PORT;
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`DesignedPrice API listening on port ${port}`);
 });
