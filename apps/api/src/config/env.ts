@@ -13,6 +13,7 @@ const EnvSchema = z.object({
   S3_BUCKET: z.string().optional(),
   S3_REGION: z.string().default("us-east-1"),
   S3_PUBLIC_BASE_URL: z.string().optional(),
+  PUBLIC_BASE_URL: z.string().optional(),
   MAX_IMAGE_BYTES: z.coerce.number().default(8 * 1024 * 1024),
 });
 

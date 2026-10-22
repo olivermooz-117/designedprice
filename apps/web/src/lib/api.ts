@@ -164,11 +164,41 @@ export async function analyzeBase64(
   return result.data;
 }
 
+interface ScanListItem {
+  id: string;
+  status: ScanResponse["status"];
+  imageUrl: string;
+  brand: string | null;
+  garmentType: string | null;
+  createdAt: string;
+  valuation: null | {
+    estimatedLowPrice: number;
+    estimatedHighPrice: number;
+    medianPrice: number;
+    currency?: string;
+    confidenceScore: number;
+    suggestedEra: string;
+  };
+}
+
+// GET /api/v1/scans returns a flat summary; reshape it for the existing history UI.
 export async function getScanHistory(): Promise<ScanResponse[]> {
-  const result = await request<{ data: ScanResponse[] }>(
-    "/api/v1/scans/history",
+  const result = await request<{ data: ScanListItem[] }>(
+    "/api/v1/scans",
     { method: "GET" },
     true,
   );
-  return result.data;
+  return result.data.map((s) => ({
+    id: s.id,
+    status: s.status,
+    imageUrl: s.imageUrl,
+    createdAt: s.createdAt,
+    identification: { brand: s.brand, garmentType: s.garmentType, searchQueryString: null },
+    valuation: s.valuation && {
+      id: s.id,
+      ...s.valuation,
+      currency: s.valuation.currency ?? "USD",
+      comparables: [],
+    },
+  }));
 }

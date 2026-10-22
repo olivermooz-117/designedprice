@@ -20,6 +20,7 @@ import {
   register,
   logout,
   isLoggedIn,
+  SessionExpiredError,
 } from "./src/api";
 
 type Tab = "scan" | "history" | "account";
@@ -44,8 +45,8 @@ export default function App() {
     try {
       const data = await listScans();
       setHistory(data);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      if (e instanceof SessionExpiredError) setAuthed(false);
     }
   }, []);
 
@@ -87,6 +88,7 @@ export default function App() {
       setResult(data);
       refreshHistory();
     } catch (e) {
+      if (e instanceof SessionExpiredError) setAuthed(false);
       setError(e instanceof Error ? e.message : "Analysis failed");
     } finally {
       setLoading(false);
@@ -132,7 +134,7 @@ export default function App() {
           />
           <TextInput
             style={styles.input}
-            placeholder="Password (min 6)"
+            placeholder="Password (min 10 characters)"
             secureTextEntry
             value={password}
             onChangeText={setPassword}

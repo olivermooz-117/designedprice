@@ -8,12 +8,16 @@ import { errorHandler } from "./middleware/errorHandler";
 
 export const app = express();
 
+// Behind Render/Heroku the real client IP arrives in X-Forwarded-For; rate limiting needs it.
+app.set("trust proxy", 1);
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 const origins = process.env.CORS_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean);
 app.use(
   cors({
-    origin: origins && origins.length > 0 ? origins : true,
+    // CORS_ORIGINS unset: allow any origin in development, none in production.
+    origin: origins && origins.length > 0 ? origins : process.env.NODE_ENV !== "production",
     credentials: true,
   }),
 );

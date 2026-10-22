@@ -1,6 +1,7 @@
 import { env } from "../config/env";
 import { AppError } from "./errors";
 import type { ImagePayload } from "../services/GeminiVisionService";
+import { sniffImageMime } from "./sniffImage";
 
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const allowedHosts = new Set(env.ALLOWED_IMAGE_HOSTS.split(",").map((h) => h.trim().toLowerCase()));
@@ -46,16 +47,26 @@ export async function loadImageFromUrl(rawUrl: string): Promise<ImagePayload> {
     }
     chunks.push(value);
   }
-  return { mimeType, base64: Buffer.concat(chunks).toString("base64") };
+  const bytes = Buffer.concat(chunks);
+  const sniffed = sniffImageMime(bytes);
+  if (!sniffed || !ALLOWED_MIME.has(sniffed)) {
+    throw new AppError(415, "UNSUPPORTED_IMAGE_TYPE", "The downloaded file is not a supported image.");
+  }
+  return { mimeType: sniffed, base64: bytes.toString("base64") };
 }
 
-export function parseBase64Image(base64: string, mimeType: string): ImagePayload {
-  if (!ALLOWED_MIME.has(mimeType)) {
-    throw new AppError(415, "UNSUPPORTED_IMAGE_TYPE", `Unsupported type: ${mimeType}`);
+export function parseBase64Image(base64: string, claimedMimeType: string): ImagePayload {
+  if (!ALLOWED_MIME.has(claimedMimeType)) {
+    throw new AppError(415, "UNSUPPORTED_IMAGE_TYPE", `Unsupported type: ${claimedMimeType}`);
   }
   const clean = base64.replace(/^data:[^;]+;base64,/, "");
   if (Buffer.byteLength(clean, "base64") > env.MAX_IMAGE_BYTES) {
     throw new AppError(413, "IMAGE_TOO_LARGE", "Image exceeds the maximum allowed size.");
+  }
+  // Trust the bytes, not the client: Expo can label a camera photo image/heic while sending JPEG data.
+  const mimeType = sniffImageMime(Buffer.from(clean, "base64"));
+  if (!mimeType || !ALLOWED_MIME.has(mimeType)) {
+    throw new AppError(415, "UNSUPPORTED_IMAGE_TYPE", "The data is not a supported image.");
   }
   return { mimeType, base64: clean };
 }

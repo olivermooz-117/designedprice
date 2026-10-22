@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Upload, Loader2, Link as LinkIcon, ImagePlus, X } from "lucide-react";
+import { Upload, Loader2, Link as LinkIcon, ImagePlus, X, Camera } from "lucide-react";
 import { analyzeImage, analyzeBase64 } from "@/lib/api";
 import type { ScanResponse } from "@/lib/types";
 import { ResultsCard } from "./ResultsCard";
@@ -155,6 +155,23 @@ export function UploadForm() {
               </label>
             )}
           </div>
+        )}
+
+        {mode === "file" && !preview && (
+          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50 md:hidden">
+            <Camera className="h-4 w-4" />
+            Take a photo
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onFile(f);
+              }}
+            />
+          </label>
         )}
 
         <button

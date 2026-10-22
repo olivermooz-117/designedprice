@@ -22,7 +22,15 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "DesignedPrice uses the camera to photograph garments you want to value.",
+          "photosPermission": "DesignedPrice reads the photos you choose to value.",
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }

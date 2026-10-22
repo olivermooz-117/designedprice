@@ -22,13 +22,15 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
   }
 
   try {
-    // Verify signature + expiry. Issuer/audience optional for local dev.
+    // Verify signature, expiry, issuer and audience (must match issueToken and devToken).
     const payload = jwt.verify(token, env.JWT_SECRET, {
+      issuer: "designedprice-api",
+      audience: "designedprice-web",
       algorithms: ["HS256"],
     }) as jwt.JwtPayload;
 
     if (!payload.sub || typeof payload.sub !== "string") {
-      console.error("[auth] token missing sub claim", payload);
+      console.error("[auth] token missing sub claim");
       throw new Error("no sub");
     }
 

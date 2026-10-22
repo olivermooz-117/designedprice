@@ -17,6 +17,7 @@ export async function listScans(req: Request, res: Response, next: NextFunction)
             estimatedLowPrice: true,
             estimatedHighPrice: true,
             medianPrice: true,
+            currency: true,
             confidenceScore: true,
             suggestedEra: true,
           },
@@ -37,6 +38,7 @@ export async function listScans(req: Request, res: Response, next: NextFunction)
               estimatedLowPrice: s.valuation.estimatedLowPrice.toNumber(),
               estimatedHighPrice: s.valuation.estimatedHighPrice.toNumber(),
               medianPrice: s.valuation.medianPrice.toNumber(),
+              currency: s.valuation.currency,
               confidenceScore: s.valuation.confidenceScore,
               suggestedEra: s.valuation.suggestedEra,
             }

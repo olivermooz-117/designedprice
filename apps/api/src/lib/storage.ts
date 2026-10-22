@@ -40,12 +40,16 @@ export async function uploadScanImage(
     return `${env.S3_PUBLIC_BASE_URL}/${key}`;
   }
 
-  // Local disk fallback (development)
+  // Local disk fallback (development). Most hosts wipe local disk on every deploy.
+  if (env.NODE_ENV === "production") {
+    console.warn("[storage] S3 is not configured: images are kept on local disk and will be lost on redeploy.");
+  }
   const dir = path.join(process.cwd(), "uploads", userId);
   await mkdir(dir, { recursive: true });
   const filePath = path.join(dir, filename);
   await writeFile(filePath, Buffer.from(base64, "base64"));
 
   // Served by Express static middleware
-  return `http://localhost:${env.PORT}/uploads/${userId}/${filename}`;
+  const base = (env.PUBLIC_BASE_URL || `http://localhost:${env.PORT}`).replace(/\/+$/, "");
+  return `${base}/uploads/${userId}/${filename}`;
 }

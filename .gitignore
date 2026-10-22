@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+# user photos saved by the local-disk fallback
+apps/api/uploads/
+# editor / tool backups
+*.bak
+*.bak.*
+*.pre-tests.bak.*
