@@ -11,6 +11,12 @@ export class SessionExpiredError extends Error {
 }
 
 async function send(path: string, init: RequestInit) {
+  if (!API_URL) {
+    throw new Error(
+      "API URL is not configured. Set EXPO_PUBLIC_API_URL to your deployed HTTPS API URL.",
+    );
+  }
+
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, init);

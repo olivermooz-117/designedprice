@@ -81,10 +81,16 @@ export default function App() {
 
     const asset = picked.assets[0];
     setPreview(asset.uri);
+
+    if (!asset.base64) {
+      setError("Could not read the image data. Please choose another image.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const data = await analyzeBase64(asset.base64!, asset.mimeType ?? "image/jpeg");
+      const data = await analyzeBase64(asset.base64, asset.mimeType ?? "image/jpeg");
       setResult(data);
       refreshHistory();
     } catch (e) {
