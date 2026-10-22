@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API build and tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      GEMINI_API_KEY: test_gemini_api_key_placeholder
+      GEMINI_MODEL: gemini-2.5-flash
+      DATABASE_URL: postgresql://test:test@localhost:5432/designedprice_test
+      SERPAPI_API_KEY: test_serpapi_api_key_placeholder
+      JWT_SECRET: ci_only_secret_change_this_value
+      ALLOWED_IMAGE_HOSTS: example.com
+      CORS_ORIGINS: http://localhost:3000
+      MAX_IMAGE_BYTES: 8388608
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+      - run: npm install
+      - run: npm test
+
+  web:
+    name: Web lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm install
+      - run: npm run lint
+      - run: npm run build
+
+  mobile:
+    name: Mobile TypeScript check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm install
+      - run: npx tsc --noEmit

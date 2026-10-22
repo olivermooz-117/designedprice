@@ -34,8 +34,8 @@ test("GET /health returns a healthy response", async () => {
   assert.deepEqual(await response.json(), { ok: true });
 });
 
-test("GET /api/v1/scans/history rejects a missing token", async () => {
-  const response = await fetch(`${baseUrl}/api/v1/scans/history`);
+test("GET /api/v1/scans rejects a missing token", async () => {
+  const response = await fetch(`${baseUrl}/api/v1/scans`);
 
   assert.equal(response.status, 401);
   const body = await response.json();
