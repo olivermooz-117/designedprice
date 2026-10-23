@@ -94,24 +94,40 @@ export class PricingService {
     for (const [i, query] of tiers.entries()) {
       const raw = await this.provider.fetchSoldComps(query, 60);
       const comps = this.clean(raw, analysis.brand);
-      if (comps.length >= MIN_COMPS || i === tiers.length - 1) {
-        if (comps.length === 0) return null;
-        const inliers = this.removeOutliers(comps);
-        const prices = inliers.map((c) => c.price).sort((a, b) => a - b);
-        const tier = Math.min(i + 1, 3) as 1 | 2 | 3;
 
-        return {
-          lowPrice: round2(percentile(prices, 0.25)),
-          highPrice: round2(percentile(prices, 0.75)),
-          medianPrice: round2(percentile(prices, 0.5)),
-          currency: "USD",
-          confidenceScore: this.blendConfidence(analysis.confidenceScore, inliers.length, tier),
-          queryUsed: query,
-          queryTier: tier,
-          comparables: inliers.slice(0, 10),
-        };
+      // Try broader queries when there are not enough clean comparables.
+      if (comps.length < MIN_COMPS) {
+        if (i === tiers.length - 1) return null;
+        continue;
       }
+
+      const inliers = this.removeOutliers(comps);
+
+      // An estimate needs at least MIN_COMPS listings after outlier removal.
+      if (inliers.length < MIN_COMPS) {
+        if (i === tiers.length - 1) return null;
+        continue;
+      }
+
+      const prices = inliers.map((c) => c.price).sort((a, b) => a - b);
+      const tier = Math.min(i + 1, 3) as 1 | 2 | 3;
+
+      return {
+        lowPrice: round2(percentile(prices, 0.25)),
+        highPrice: round2(percentile(prices, 0.75)),
+        medianPrice: round2(percentile(prices, 0.5)),
+        currency: "USD",
+        confidenceScore: this.blendConfidence(
+          analysis.confidenceScore,
+          inliers.length,
+          tier,
+        ),
+        queryUsed: query,
+        queryTier: tier,
+        comparables: inliers.slice(0, 10),
+      };
     }
+
     return null;
   }
 

@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DesignedPrice Web
 
-## Getting Started
+The DesignedPrice web application is built with Next.js, React, TypeScript, and Tailwind CSS. It connects to the DesignedPrice API for authentication, garment image analysis, price estimates, and scan history.
 
-First, run the development server:
+## Requirements
+
+- Node.js 22 or a compatible supported Node.js release
+- npm
+- The DesignedPrice API running locally or deployed
+- Valid API/database/AI provider configuration on the API server
+
+## Configure the API URL
+
+Create a local environment file:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+If `.env.example` does not exist yet, create `.env.local` with:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```dotenv
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Set `NEXT_PUBLIC_API_URL` to your deployed HTTPS API origin in production. This variable is public and must not contain secrets.
 
-## Learn More
+## Install and run
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open http://localhost:3000.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Checks
 
-## Deploy on Vercel
+```bash
+npm run lint
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Run these checks before opening a pull request or deploying.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Production notes
+
+- Configure `NEXT_PUBLIC_API_URL` in your hosting provider.
+- Configure the API's `CORS_ORIGINS` to include the exact deployed web origin.
+- Use HTTPS for public endpoints.
+- Keep API keys, database credentials, and JWT secrets on the API server only.
+- Test registration, login, image analysis, valuation results, and scan history against the deployed API.
+
+See the repository root README for the complete project architecture and API/mobile setup.

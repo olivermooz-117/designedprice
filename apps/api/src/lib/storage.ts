@@ -22,6 +22,18 @@ export async function uploadScanImage(
   const ext = EXT[mimeType] ?? "bin";
   const filename = `${randomUUID()}.${ext}`;
 
+  // Production images must use durable storage; local disks may disappear on redeploy.
+  if (
+    env.NODE_ENV === "production" &&
+    (!env.S3_BUCKET || !env.S3_PUBLIC_BASE_URL)
+  ) {
+    throw new AppError(
+      503,
+      "STORAGE_NOT_CONFIGURED",
+      "Production image storage is not configured. Set S3_BUCKET and S3_PUBLIC_BASE_URL.",
+    );
+  }
+
   // Prefer S3 when configured
   if (env.S3_BUCKET && env.S3_PUBLIC_BASE_URL) {
     const key = `scans/${userId}/${filename}`;

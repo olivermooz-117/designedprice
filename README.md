@@ -1,39 +1,42 @@
 # DesignedPrice
 
-DesignedPrice is an AI-assisted clothing valuation application that analyzes garment images and estimates market value using comparable online listings.
+DesignedPrice is an AI-assisted clothing valuation application. Users submit a garment photo, receive an AI-assisted identification, and get an estimated market-value range based on comparable marketplace listings.
+
+Valuations are estimates, not guarantees of resale value, authentication, or professional appraisal.
 
 ## Features
 
-- User registration and login
-- AI garment identification using Google Gemini
-- Estimated garment brand, type, and era
-- Low, median, and high price estimates
-- Comparable listing search using SerpAPI
-- PostgreSQL persistence using Prisma
-- Web application built with Next.js, React, and TypeScript
-- Mobile application built with Expo and React Native
-- Express and TypeScript API
-- Image validation and authenticated API routes
-
-Valuations are estimates and are not guarantees of resale value or proof of authenticity.
+- Account registration and login
+- Garment image analysis with Google Gemini
+- Identification of visible brand evidence, garment type, and estimated era
+- Estimated low, median, and high prices based on comparable listings
+- Marketplace search through SerpAPI
+- Saved scan history in PostgreSQL using Prisma
+- Web interface built with Next.js, React, and TypeScript
+- Mobile interface built with Expo and React Native
+- Image input validation, authenticated routes, and API rate limiting
+- Automated API tests and GitHub Actions checks
 
 ## Architecture
 
-- `apps/web` — Next.js web application
-- `apps/mobile` — Expo / React Native application
-- `apps/api` — Express API, Prisma schema, database migrations, AI services, and tests
+| Path | Purpose |
+| --- | --- |
+| `apps/api` | Express/TypeScript API, Prisma schema/migrations, authentication, image analysis, pricing, and tests |
+| `apps/web` | Next.js web application |
+| `apps/mobile` | Expo/React Native mobile application |
+| `.github/workflows/ci.yml` | Automated API, web, and mobile checks |
 
-The API connects to PostgreSQL, Google Gemini, and SerpAPI. Image storage can be configured to use S3.
+The API uses PostgreSQL, Google Gemini, and SerpAPI. Production image uploads require S3-backed storage.
 
 ## Requirements
 
-- Node.js and npm
-- PostgreSQL
+- Node.js 22 and npm
+- PostgreSQL database
 - Google Gemini API key
 - SerpAPI API key
-- Optional AWS S3 configuration for image storage
+- AWS S3 bucket and public image base URL for production image storage
 
-## Backend setup
+## API setup
 
 ```bash
 cd apps/api
@@ -41,20 +44,26 @@ npm install
 cp .env.example .env
 ```
 
-Edit `apps/api/.env` and configure:
+Edit `apps/api/.env` and provide real values for:
 
 - `DATABASE_URL`
 - `GEMINI_API_KEY`
 - `SERPAPI_API_KEY`
 - `JWT_SECRET`
 - `ALLOWED_IMAGE_HOSTS`
-- `CORS_ORIGINS` for production
-- `PUBLIC_BASE_URL` where required
-- Optional S3 settings
 
-Never commit real credentials or `.env` files.
+For production, also configure:
 
-Prepare the database:
+- `NODE_ENV=production`
+- `CORS_ORIGINS` with the exact web origin(s) allowed to call the API
+- `S3_BUCKET`
+- `S3_REGION`
+- `S3_PUBLIC_BASE_URL`
+- `PUBLIC_BASE_URL` if required by your deployment and local image URLs
+
+Never commit `.env` files or real credentials.
+
+Generate the Prisma client and apply migrations:
 
 ```bash
 npx prisma generate
@@ -67,60 +76,100 @@ Start the API:
 npm run dev
 ```
 
-The default local API URL is `http://localhost:4000`. Its health endpoint is `/health`.
+The default local API address is http://localhost:4000. The health endpoint is `/health`.
 
 ## Web setup
 
 ```bash
 cd apps/web
 npm install
+```
+
+Create `apps/web/.env.local` with:
+
+```dotenv
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+Then run:
+
+```bash
 npm run dev
 ```
 
-The web application runs at `http://localhost:3000`.
+Open http://localhost:3000.
 
-Configure `NEXT_PUBLIC_API_URL` if the API is hosted at a different address.
-
-Check the web app:
-
-```bash
-npm run lint
-npm run build
-```
+For production, set `NEXT_PUBLIC_API_URL` to the deployed HTTPS API origin and add the web origin to the API's `CORS_ORIGINS`.
 
 ## Mobile setup
 
 ```bash
 cd apps/mobile
 npm install
+```
+
+Set `EXPO_PUBLIC_API_URL` to an API address reachable from the device before starting Expo.
+
+Examples:
+
+- iOS simulator: `http://localhost:4000` may work.
+- Android emulator: `http://10.0.2.2:4000` is commonly used to reach the host machine.
+- Physical phone: use your computer's reachable LAN address, such as `http://192.168.1.20:4000`, with both devices on the same network.
+- Production: use the deployed HTTPS API origin.
+
+Start Expo:
+
+```bash
 npx expo start
 ```
 
-Configure `EXPO_PUBLIC_API_URL` to point to the API. For a physical device, use an address reachable from that device; for production, use the deployed HTTPS API URL.
+Do not use the examples above as your production API URL. Use your actual deployed API origin.
 
-## API tests
+## Automated checks
+
+API build and tests:
 
 ```bash
 cd apps/api
+npm install
 npm test
 ```
 
-The test command builds the API and runs its Node.js test suite.
+Web lint and production build:
+
+```bash
+cd apps/web
+npm install
+npm run lint
+npm run build
+```
+
+Mobile TypeScript check:
+
+```bash
+cd apps/mobile
+npm install
+npx tsc --noEmit
+```
+
+The GitHub Actions workflow runs the API tests, web lint/build, and mobile TypeScript check for pushes and pull requests targeting `main`.
 
 ## Deployment checklist
 
-- Configure environment variables in the hosting platform.
-- Use a managed PostgreSQL database and apply Prisma migrations.
-- Set production CORS origins explicitly.
-- Use HTTPS for public endpoints.
-- Configure persistent image storage for production.
-- Set the web and mobile API URLs correctly.
-- Test registration, login, image analysis, valuations, and history.
-- Run tests and production builds before releasing.
+- [ ] Use a managed PostgreSQL database and apply Prisma migrations.
+- [ ] Set strong production secrets and real provider API keys.
+- [ ] Set `NODE_ENV=production`.
+- [ ] Configure `CORS_ORIGINS` with only the intended web origins.
+- [ ] Configure S3 bucket and public image base URL for durable production images.
+- [ ] Confirm uploaded image URLs are accessible to authorized application users as intended.
+- [ ] Configure the web and mobile API URLs.
+- [ ] Use HTTPS for all public endpoints.
+- [ ] Test registration, login, invalid/expired tokens, image uploads, pricing, and scan history.
+- [ ] Run all local checks and confirm GitHub Actions is green.
 
 ## Limitations
 
-AI identification and price comparisons may be inaccurate. Comparable listings can differ in condition, size, rarity, authenticity, and seller circumstances. Results should be treated as estimates.
+AI identification can be wrong. Marketplace listings may differ in condition, size, rarity, authenticity, currency, and seller circumstances. An estimate should be interpreted alongside the returned comparables and available evidence.
 
 ## License
 
