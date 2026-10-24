@@ -17,22 +17,10 @@ const EXT: Record<string, string> = {
 export async function uploadScanImage(
   userId: string,
   mimeType: string,
-  base64: string
+  base64: string,
 ): Promise<string> {
   const ext = EXT[mimeType] ?? "bin";
   const filename = `${randomUUID()}.${ext}`;
-
-  // Production images must use durable storage; local disks may disappear on redeploy.
-  if (
-    env.NODE_ENV === "production" &&
-    (!env.S3_BUCKET || !env.S3_PUBLIC_BASE_URL)
-  ) {
-    throw new AppError(
-      503,
-      "STORAGE_NOT_CONFIGURED",
-      "Production image storage is not configured. Set S3_BUCKET and S3_PUBLIC_BASE_URL.",
-    );
-  }
 
   // Prefer S3 when configured
   if (env.S3_BUCKET && env.S3_PUBLIC_BASE_URL) {
@@ -44,7 +32,7 @@ export async function uploadScanImage(
           Key: key,
           Body: Buffer.from(base64, "base64"),
           ContentType: mimeType,
-        })
+        }),
       );
     } catch {
       throw new AppError(502, "STORAGE_UPLOAD_FAILED", "Failed to store the image.");
@@ -52,16 +40,21 @@ export async function uploadScanImage(
     return `${env.S3_PUBLIC_BASE_URL}/${key}`;
   }
 
-  // Local disk fallback (development). Most hosts wipe local disk on every deploy.
+  // Local disk fallback (dev + staging without S3)
   if (env.NODE_ENV === "production") {
-    console.warn("[storage] S3 is not configured: images are kept on local disk and will be lost on redeploy.");
+    console.warn(
+      "[storage] S3 not configured: using local disk (files may be lost on redeploy).",
+    );
   }
+
   const dir = path.join(process.cwd(), "uploads", userId);
   await mkdir(dir, { recursive: true });
   const filePath = path.join(dir, filename);
   await writeFile(filePath, Buffer.from(base64, "base64"));
 
-  // Served by Express static middleware
-  const base = (env.PUBLIC_BASE_URL || `http://localhost:${env.PORT}`).replace(/\/+$/, "");
+  const base = (env.PUBLIC_BASE_URL || `http://localhost:${env.PORT}`).replace(
+    /\/+$/,
+    "",
+  );
   return `${base}/uploads/${userId}/${filename}`;
 }
