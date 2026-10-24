@@ -66,7 +66,7 @@ export function AppShell() {
 
   if (!ready) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-50">
+      <main className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
       </main>
     );
@@ -77,8 +77,8 @@ export function AppShell() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white">
+    <main className="min-h-screen text-zinc-900 animate-fade-up">
+      <header className="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link href="/" className="text-xl font-bold tracking-tight">
             DesignedPrice<span className="text-zinc-400">.</span>
@@ -95,7 +95,7 @@ export function AppShell() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium hover:bg-zinc-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white/90 px-3 py-2 text-sm font-medium hover:bg-zinc-50"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Log out</span>
@@ -105,7 +105,7 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <section className="mb-8">
+        <section className="mb-8 animate-fade-up-delay-1">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Your clothing intelligence workspace
           </p>
@@ -118,7 +118,7 @@ export function AppShell() {
           </p>
         </section>
 
-        <nav className="mb-8 flex gap-2 border-b border-zinc-200">
+        <nav className="mb-8 flex gap-2 border-b border-zinc-200/80 animate-fade-up-delay-1">
           <button
             type="button"
             onClick={() => setTab("scan")}
@@ -145,13 +145,11 @@ export function AppShell() {
           </button>
         </nav>
 
-        {tab === "scan" ? (
-          <UploadForm />
-        ) : (
-          <HistoryPanel />
-        )}
+        <div className="animate-fade-up-delay-2">
+          {tab === "scan" ? <UploadForm /> : <HistoryPanel />}
+        </div>
 
-        <footer className="mt-16 border-t border-zinc-200 pt-6 text-center text-xs text-zinc-500">
+        <footer className="mt-16 border-t border-zinc-200/80 pt-6 text-center text-xs text-zinc-500">
           DesignedPrice · AI-assisted garment identification and market estimates
         </footer>
       </div>
@@ -203,14 +201,24 @@ function AuthScreen({
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50">
+    <main className="min-h-screen animate-fade-up">
       <div className="grid min-h-screen lg:grid-cols-2">
-        <section className="flex flex-col justify-between bg-zinc-950 px-6 py-8 text-white sm:px-12 lg:px-16 lg:py-12">
-          <Link href="/" className="text-xl font-bold tracking-tight">
+        <section className="relative flex flex-col justify-between overflow-hidden bg-zinc-950 px-6 py-8 text-white sm:px-12 lg:px-16 lg:py-12">
+          {/* subtle animated glow on auth panel */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-20 top-1/4 h-72 w-72 rounded-full bg-white/5 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 bottom-1/4 h-64 w-64 rounded-full bg-zinc-500/10 blur-3xl"
+          />
+
+          <Link href="/" className="relative text-xl font-bold tracking-tight">
             DesignedPrice<span className="text-zinc-500">.</span>
           </Link>
 
-          <div className="mx-auto my-12 max-w-lg lg:my-0">
+          <div className="relative mx-auto my-12 max-w-lg lg:my-0">
             <div className="mb-6 inline-flex rounded-2xl border border-white/15 bg-white/5 p-4">
               <ScanLine className="h-8 w-8" />
             </div>
@@ -241,13 +249,13 @@ function AuthScreen({
             </div>
           </div>
 
-          <p className="text-xs text-zinc-500">
+          <p className="relative text-xs text-zinc-500">
             Estimates are indicative, not guaranteed sale prices.
           </p>
         </section>
 
-        <section className="flex items-center justify-center px-5 py-12 sm:px-10">
-          <div className="w-full max-w-md">
+        <section className="flex items-center justify-center px-5 py-12 sm:px-10 animate-fade-up-delay-1">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white/90 p-6 shadow-sm backdrop-blur-sm sm:p-8">
             <div className="mb-8">
               <p className="text-sm font-medium text-zinc-500">
                 Welcome to DesignedPrice
@@ -294,7 +302,8 @@ function AuthScreen({
                     htmlFor="displayName"
                     className="mb-1.5 block text-sm font-medium"
                   >
-                    Display name <span className="text-zinc-400">(optional)</span>
+                    Display name{" "}
+                    <span className="text-zinc-400">(optional)</span>
                   </label>
                   <input
                     id="displayName"
@@ -439,7 +448,7 @@ function HistoryPanel() {
           type="button"
           onClick={() => void refresh()}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white/90 px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -456,12 +465,12 @@ function HistoryPanel() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-white p-12 text-sm text-zinc-500">
+        <div className="flex items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-12 text-sm text-zinc-500 backdrop-blur-sm">
           <Loader2 className="h-5 w-5 animate-spin" />
           Loading your scans…
         </div>
       ) : !error && scans.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-14 text-center">
+        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white/90 px-6 py-14 text-center backdrop-blur-sm">
           <ScanLine className="mx-auto h-8 w-8 text-zinc-400" />
           <h3 className="mt-4 font-semibold">No scans yet</h3>
           <p className="mt-2 text-sm text-zinc-500">
@@ -473,7 +482,7 @@ function HistoryPanel() {
           {scans.map((scan) => (
             <article
               key={scan.id}
-              className="flex gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5"
+              className="flex gap-4 rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-5"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
