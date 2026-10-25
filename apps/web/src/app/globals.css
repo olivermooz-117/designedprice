@@ -13,8 +13,6 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {
@@ -102,7 +100,7 @@ body::after {
 }
 
 .glass-btn {
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.85), rgba(129, 140, 248, 0.9));
+  background: linear-gradient(135deg, #6d4fe0, #4f6df0);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow:
@@ -111,12 +109,14 @@ body::after {
   transition: all 0.2s ease;
 }
 .glass-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(167, 139, 250, 1), rgba(129, 140, 248, 1));
+  background: linear-gradient(135deg, #5f40d4, #3f5ee6);
   box-shadow: 0 6px 28px rgba(139, 92, 246, 0.45);
   transform: translateY(-1px);
 }
 .glass-btn:disabled {
-  opacity: 0.45;
+  background: rgba(148, 163, 184, 0.35);
+  color: #475569;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -145,5 +145,19 @@ body::after {
   .animate-fade-up-delay-1,
   .animate-fade-up-delay-2 {
     animation: none !important;
+  }
+}
+
+/* Fallbacks: no backdrop-filter support, or the user asked for less transparency */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .glass-strong, .glass-panel, .glass-input, .glass-nav {
+    background: rgba(255, 255, 255, 0.88);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .glass-strong, .glass-panel, .glass-input, .glass-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }

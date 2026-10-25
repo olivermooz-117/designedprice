@@ -212,7 +212,7 @@ function AuthScreen({
             DesignedPrice<span className="text-violet-500">.</span>
           </Link>
 
-          <div className="relative my-10 lg:my-0 max-w-md">
+          <div className="relative my-8 max-w-md lg:my-10">
             <div className="mb-6 inline-flex rounded-2xl glass p-4">
               <ScanLine className="h-8 w-8 text-violet-500" />
             </div>
@@ -229,7 +229,7 @@ function AuthScreen({
               market prices, and keep your discoveries in one place.
             </p>
 
-            <div className="mt-8 space-y-3 text-sm text-slate-600">
+            <div className="mt-8 hidden space-y-3 text-sm text-slate-600 lg:block">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-violet-400" />
                 Personal scan history
@@ -245,7 +245,7 @@ function AuthScreen({
             </div>
           </div>
 
-          <p className="relative text-xs text-slate-500">
+          <p className="relative mt-6 hidden text-xs text-slate-500 lg:block">
             Estimates are indicative, not guaranteed sale prices.
           </p>
         </section>

@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.100.4:4000";
+// Set EXPO_PUBLIC_API_URL (e.g. in apps/mobile/.env). The LAN fallback is for local dev builds only.
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ?? (__DEV__ ? "http://192.168.100.4:4000" : undefined);
 
 /** Thrown when there is no token or the server rejects it; the UI should send the user to log in. */
 export class SessionExpiredError extends Error {

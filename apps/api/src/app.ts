@@ -16,7 +16,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 // CORS: In production, CORS_ORIGINS is validated at startup and must be a non-empty comma-separated list.
 // In development/test, allow any origin for convenience.
-const corsOrigins = env.CORS_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ?? [];
+const corsOrigins = env.CORS_ORIGINS?.split(",").map((s) => s.trim().replace(/\/+$/, "")).filter(Boolean) ?? [];
 const isDev = env.NODE_ENV !== "production";
 app.use(
   cors({

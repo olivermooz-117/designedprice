@@ -57,7 +57,7 @@ export function ResultsCard({ data }: { data: ScanResponse }) {
                 {formatPrice(valuation.estimatedLowPrice)} – {formatPrice(valuation.estimatedHighPrice)}
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Median sold:{" "}
+                Median listed:{" "}
                 <span className="font-semibold text-slate-700">
                   {formatPrice(valuation.medianPrice)}
                 </span>
@@ -66,7 +66,7 @@ export function ResultsCard({ data }: { data: ScanResponse }) {
               <div className="mt-3 flex items-start gap-2 text-sm text-slate-600">
                 <Info className="h-4 w-4 flex-shrink-0 mt-0.5 text-violet-400" aria-hidden="true" />
                 <p>
-                  <span className="font-medium">Confidence: {conf}%</span> — Based on {valuation.comparables.length} comparable sold listing{valuation.comparables.length !== 1 ? "s" : ""} and AI identification certainty. Estimates are indicative, not guaranteed sale prices.
+                  <span className="font-medium">Confidence: {conf}%</span> — Based on {valuation.comparables.length} comparable listing{valuation.comparables.length !== 1 ? "s" : ""} and AI identification certainty. Estimates are indicative, not guaranteed sale prices.
                 </p>
               </div>
             </div>
@@ -79,10 +79,10 @@ export function ResultsCard({ data }: { data: ScanResponse }) {
         <div className="rounded-3xl border border-amber-200/60 bg-amber-50/50 px-5 py-4 text-amber-800 text-sm backdrop-blur-sm flex items-start gap-3" role="status">
           <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
-            <p className="font-medium">No comparable sold listings found</p>
+            <p className="font-medium">No comparable listings found</p>
             <p className="mt-1">
               {isNoComparables
-                ? "The garment was identified, but there aren't enough recent sold listings to estimate a price range."
+                ? "The garment was identified, but there aren't enough recent listings to estimate a price range."
                 : "Analysis couldn't identify the garment well enough to search for comparables."}
             </p>
             <p className="mt-2 text-xs">
@@ -96,7 +96,7 @@ export function ResultsCard({ data }: { data: ScanResponse }) {
       {valuation && valuation.comparables.length > 0 && (
         <div>
           <h3 className="text-[11px] font-medium text-violet-500/80 uppercase tracking-widest mb-3">
-            Recent Sold Comparables ({valuation.comparables.length})
+            Recent Comparables ({valuation.comparables.length})
           </h3>
           <div className="grid gap-2.5">
             {valuation.comparables.map((c) => (

@@ -331,7 +331,7 @@ function ResultCard({ result }: { result: ScanResponse }) {
             {conf}% conf.
           </Text>
           <Text style={[styles.meta, { marginTop: 4, fontSize: 11, color: "#a1a1aa" }]}>
-            Based on {result.valuation.comparables.length} comparable sold listing{result.valuation.comparables.length !== 1 ? "s" : ""}. Estimates are indicative, not guaranteed prices.
+            Based on {result.valuation.comparables.length} comparable listing{result.valuation.comparables.length !== 1 ? "s" : ""}. Estimates are indicative, not guaranteed prices.
           </Text>
           {result.valuation.comparables?.slice(0, 5).map((c) => (
             <TouchableOpacity key={c.id} style={styles.comp} onPress={() => Linking.openURL(c.itemUrl)} accessibilityLabel={`View ${c.title} on ${c.platform}`}>
@@ -345,11 +345,11 @@ function ResultCard({ result }: { result: ScanResponse }) {
       ) : (
         <View style={styles.noCompsContainer}>
           <Text style={styles.noCompsTitle}>
-            {isNoComparables ? "No comparable sold listings found" : "Could not identify garment for pricing"}
+            {isNoComparables ? "No comparable listings found" : "Could not identify garment for pricing"}
           </Text>
           <Text style={styles.noCompsText}>
             {isNoComparables
-              ? "The garment was identified, but there aren't enough recent sold listings to estimate a price range."
+              ? "The garment was identified, but there aren't enough recent listings to estimate a price range."
               : "Analysis couldn't identify the garment well enough to search for comparables."}
           </Text>
           <Text style={[styles.noCompsText, { fontSize: 12, marginTop: 8 }]}>
