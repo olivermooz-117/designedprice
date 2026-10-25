@@ -16,6 +16,8 @@ const EnvSchema = z.object({
   PUBLIC_BASE_URL: z.string().optional(),
   MAX_IMAGE_BYTES: z.coerce.number().default(8 * 1024 * 1024),
   CORS_ORIGINS: z.string().optional(),
+  // Escape hatch: lets production boot with local-disk uploads (lost on every redeploy). Prefer real S3.
+  ALLOW_EPHEMERAL_STORAGE: z.enum(["true", "false"]).default("false"),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -41,7 +43,11 @@ if (env.NODE_ENV === "production") {
   }
 
   if (!env.S3_BUCKET || !env.S3_PUBLIC_BASE_URL) {
-    errors.push("S3_BUCKET and S3_PUBLIC_BASE_URL are required in production for durable image storage");
+    if (env.ALLOW_EPHEMERAL_STORAGE === "true") {
+      console.warn("[config] WARNING: no S3 configured; uploaded images are stored on local disk and will be lost on redeploy.");
+    } else {
+      errors.push("S3_BUCKET and S3_PUBLIC_BASE_URL are required in production for durable image storage (or set ALLOW_EPHEMERAL_STORAGE=true to accept losing images on redeploy)");
+    }
   }
 
   if (env.JWT_SECRET.length < 64) {
