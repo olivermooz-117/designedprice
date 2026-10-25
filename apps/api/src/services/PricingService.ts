@@ -43,20 +43,38 @@ export class SerpApiEbayProvider implements CompProvider {
         signal: AbortSignal.timeout(10_000),
       });
     } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      console.error(JSON.stringify({
+        event: "serpapi_request_failed",
+        query,
+        error: error.message,
+        stack: error.stack,
+      }));
       throw new AppError(502, "PRICING_UNAVAILABLE", "Pricing provider unreachable.", {
-        message: err instanceof Error ? err.message : String(err),
+        message: error.message,
       });
     }
     if (!res.ok) {
+      console.error(JSON.stringify({
+        event: "serpapi_http_error",
+        query,
+        status: res.status,
+        statusText: res.statusText,
+      }));
       throw new AppError(502, "PRICING_UNAVAILABLE", `Pricing provider returned ${res.status}.`);
     }
 
     const data = (await res.json()) as SerpApiEbayResponse;
     if (data.error && !/hasn't returned any results/i.test(data.error)) {
+      console.error(JSON.stringify({
+        event: "serpapi_provider_error",
+        query,
+        error: data.error,
+      }));
       throw new AppError(502, "PRICING_UNAVAILABLE", "Pricing provider error.", data.error);
     }
 
-    return (data.organic_results ?? []).flatMap((item): RawComp[] => {
+    const results = (data.organic_results ?? []).flatMap((item): RawComp[] => {
       const price = item.price?.extracted ?? item.price?.from?.extracted;
       if (!item.link || !item.title || typeof price !== "number" || price <= 0) return [];
       return [{
@@ -68,6 +86,15 @@ export class SerpApiEbayProvider implements CompProvider {
         thumbnail: item.thumbnail ?? null,
       }];
     });
+
+    console.log(JSON.stringify({
+      event: "serpapi_response",
+      query,
+      rawResultsCount: data.organic_results?.length ?? 0,
+      validResultsCount: results.length,
+    }));
+
+    return results;
   }
 }
 
@@ -92,12 +119,30 @@ export class PricingService {
     const tiers = this.buildQueryTiers(analysis);
 
     for (const [i, query] of tiers.entries()) {
+      const tierStart = Date.now();
       const raw = await this.provider.fetchSoldComps(query, 60);
       const comps = this.clean(raw, analysis.brand);
 
+      console.log(JSON.stringify({
+        event: "pricing_tier_evaluated",
+        tier: i + 1,
+        query,
+        rawResults: raw.length,
+        cleanResults: comps.length,
+        latencyMs: Date.now() - tierStart,
+      }));
+
       // Try broader queries when there are not enough clean comparables.
       if (comps.length < MIN_COMPS) {
-        if (i === tiers.length - 1) return null;
+        if (i === tiers.length - 1) {
+          console.log(JSON.stringify({
+            event: "pricing_no_estimate",
+            reason: "insufficient_comps_after_all_tiers",
+            finalTier: i + 1,
+            finalComps: comps.length,
+          }));
+          return null;
+        }
         continue;
       }
 
@@ -105,7 +150,15 @@ export class PricingService {
 
       // An estimate needs at least MIN_COMPS listings after outlier removal.
       if (inliers.length < MIN_COMPS) {
-        if (i === tiers.length - 1) return null;
+        if (i === tiers.length - 1) {
+          console.log(JSON.stringify({
+            event: "pricing_no_estimate",
+            reason: "insufficient_inliers_after_all_tiers",
+            finalTier: i + 1,
+            finalInliers: inliers.length,
+          }));
+          return null;
+        }
         continue;
       }
 

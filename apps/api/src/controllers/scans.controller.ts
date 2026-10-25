@@ -107,11 +107,16 @@ export async function listScanHistory(
   }
 }
 
+function logScanEvent(event: string, context: Record<string, unknown>) {
+  console.log(JSON.stringify({ event, timestamp: new Date().toISOString(), ...context }));
+}
+
 export async function analyzeScan(req: Request, res: Response, next: NextFunction): Promise<void> {
   let scanId: string | undefined;
+  const userId = req.user?.id;
+  const startTime = Date.now();
 
   try {
-    const userId = req.user?.id;
     if (!userId) throw new AppError(401, "UNAUTHORIZED", "Authentication required.");
 
     const parsed = AnalyzeBodySchema.safeParse(req.body);
@@ -127,12 +132,15 @@ export async function analyzeScan(req: Request, res: Response, next: NextFunctio
 
     let image: ImagePayload;
     let imageUrl: string;
+    let imageSource: "url" | "base64";
     if ("imageUrl" in body) {
       image = await loadImageFromUrl(body.imageUrl);
       imageUrl = body.imageUrl;
+      imageSource = "url";
     } else {
       image = parseBase64Image(body.imageBase64, body.mimeType);
       imageUrl = await uploadScanImage(userId, image.mimeType, image.base64);
+      imageSource = "base64";
     }
 
     const scan = await prisma.scan.create({
@@ -140,20 +148,59 @@ export async function analyzeScan(req: Request, res: Response, next: NextFunctio
     });
     scanId = scan.id;
 
+    logScanEvent("scan_created", { scanId, userId, imageSource, mimeType: image.mimeType });
+
+    const geminiStart = Date.now();
     const { analysis, rawResponseText, model } = await gemini.analyzeGarment(image);
+    const geminiLatencyMs = Date.now() - geminiStart;
     const rawGeminiResponse = JSON.parse(rawResponseText) as Prisma.InputJsonValue;
 
+    logScanEvent("gemini_analysis_complete", {
+      scanId,
+      model,
+      latencyMs: geminiLatencyMs,
+      category: analysis.category,
+      brand: analysis.brand,
+      garmentType: analysis.garmentType,
+      confidenceScore: analysis.confidenceScore,
+      searchQuery: analysis.searchQueryString,
+    });
+
     let estimate: PriceEstimate | null = null;
-    try {
-      estimate = analysis.garmentType === "unknown" ? null : await pricing.estimate(analysis);
-    } catch (pricingErr) {
-      console.error("[analyze] pricing lookup failed", { scanId, pricingErr });
+    let pricingError: Error | null = null;
+    if (analysis.garmentType !== "unknown") {
+      const pricingStart = Date.now();
+      try {
+        estimate = await pricing.estimate(analysis);
+        const pricingLatencyMs = Date.now() - pricingStart;
+        logScanEvent("pricing_estimate_complete", {
+          scanId,
+          latencyMs: pricingLatencyMs,
+          queryUsed: estimate?.queryUsed,
+          queryTier: estimate?.queryTier,
+          compsFound: estimate?.comparables.length ?? 0,
+          confidenceScore: estimate?.confidenceScore,
+          lowPrice: estimate?.lowPrice,
+          highPrice: estimate?.highPrice,
+          medianPrice: estimate?.medianPrice,
+        });
+      } catch (pricingErr) {
+        pricingError = pricingErr instanceof Error ? pricingErr : new Error(String(pricingErr));
+        logScanEvent("pricing_estimate_failed", {
+          scanId,
+          error: pricingError.message,
+          stack: pricingError.stack,
+        });
+      }
+    } else {
+      logScanEvent("pricing_skipped", { scanId, reason: "garment_type_unknown" });
     }
 
+    const finalStatus = estimate ? ScanStatus.COMPLETED : ScanStatus.NO_COMPARABLES;
     const saved = await prisma.scan.update({
       where: { id: scan.id },
       data: {
-        status: estimate ? ScanStatus.COMPLETED : ScanStatus.NO_COMPARABLES,
+        status: finalStatus,
         brand: analysis.brand,
         garmentType: analysis.garmentType,
         searchQueryString: analysis.searchQueryString,
@@ -186,15 +233,38 @@ export async function analyzeScan(req: Request, res: Response, next: NextFunctio
       include: scanInclude,
     });
 
+    const totalLatencyMs = Date.now() - startTime;
+    logScanEvent("scan_completed", {
+      scanId,
+      userId,
+      status: finalStatus,
+      totalLatencyMs,
+      hasValuation: !!estimate,
+      compsCount: estimate?.comparables.length ?? 0,
+    });
+
     res.status(estimate ? 201 : 200).json({ data: toResponse(saved) });
   } catch (err) {
+    const totalLatencyMs = Date.now() - startTime;
+    const error = err instanceof Error ? err : new Error(String(err));
+
+    logScanEvent("scan_failed", {
+      scanId,
+      userId,
+      error: error.message,
+      errorCode: error instanceof AppError ? error.code : "INTERNAL_ERROR",
+      statusCode: error instanceof AppError ? error.statusCode : 500,
+      totalLatencyMs,
+      stack: error.stack,
+    });
+
     if (scanId) {
       await prisma.scan
         .update({
           where: { id: scanId },
           data: {
             status: ScanStatus.FAILED,
-            errorMessage: err instanceof Error ? err.message.slice(0, 500) : "Unknown error",
+            errorMessage: error.message.slice(0, 500),
           },
         })
         .catch((e) => console.error("[analyze] failed to mark scan FAILED", e));

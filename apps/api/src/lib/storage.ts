@@ -22,39 +22,37 @@ export async function uploadScanImage(
   const ext = EXT[mimeType] ?? "bin";
   const filename = `${randomUUID()}.${ext}`;
 
-  // Prefer S3 when configured
-  if (env.S3_BUCKET && env.S3_PUBLIC_BASE_URL) {
+  // S3 is required in production (validated at startup). In dev/test, use local disk if S3 not configured.
+  const useS3 = Boolean(env.S3_BUCKET && env.S3_PUBLIC_BASE_URL);
+
+  if (useS3) {
     const key = `scans/${userId}/${filename}`;
     try {
       await s3.send(
         new PutObjectCommand({
-          Bucket: env.S3_BUCKET,
+          Bucket: env.S3_BUCKET!,
           Key: key,
           Body: Buffer.from(base64, "base64"),
           ContentType: mimeType,
         }),
       );
-    } catch {
+    } catch (err) {
+      console.error("[storage] S3 upload failed", {
+        userId,
+        key,
+        error: err instanceof Error ? err.message : String(err),
+      });
       throw new AppError(502, "STORAGE_UPLOAD_FAILED", "Failed to store the image.");
     }
     return `${env.S3_PUBLIC_BASE_URL}/${key}`;
   }
 
-  // Local disk fallback (dev + staging without S3)
-  if (env.NODE_ENV === "production") {
-    console.warn(
-      "[storage] S3 not configured: using local disk (files may be lost on redeploy).",
-    );
-  }
-
+  // Local disk fallback (development/test only)
   const dir = path.join(process.cwd(), "uploads", userId);
   await mkdir(dir, { recursive: true });
   const filePath = path.join(dir, filename);
   await writeFile(filePath, Buffer.from(base64, "base64"));
 
-  const base = (env.PUBLIC_BASE_URL || `http://localhost:${env.PORT}`).replace(
-    /\/+$/,
-    "",
-  );
+  const base = (env.PUBLIC_BASE_URL || `http://localhost:${env.PORT}`).replace(/\/+$/, "");
   return `${base}/uploads/${userId}/${filename}`;
 }

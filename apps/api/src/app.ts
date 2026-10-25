@@ -5,6 +5,7 @@ import path from "node:path";
 import { scansRouter } from "./routes/scans.routes";
 import { authRouter } from "./routes/auth.routes";
 import { errorHandler } from "./middleware/errorHandler";
+import { env } from "./config/env";
 
 export const app = express();
 
@@ -13,11 +14,13 @@ app.set("trust proxy", 1);
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
-const origins = process.env.CORS_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean);
+// CORS: In production, CORS_ORIGINS is validated at startup and must be a non-empty comma-separated list.
+// In development/test, allow any origin for convenience.
+const corsOrigins = env.CORS_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ?? [];
+const isDev = env.NODE_ENV !== "production";
 app.use(
   cors({
-    // CORS_ORIGINS unset: allow any origin in development, none in production.
-    origin: origins && origins.length > 0 ? origins : process.env.NODE_ENV !== "production",
+    origin: corsOrigins.length > 0 ? corsOrigins : isDev,
     credentials: true,
   }),
 );

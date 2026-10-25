@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -67,7 +66,7 @@ export function AppShell() {
   if (!ready) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+        <Loader2 className="h-7 w-7 animate-spin text-violet-400" />
       </main>
     );
   }
@@ -77,11 +76,12 @@ export function AppShell() {
   }
 
   return (
-    <main className="min-h-screen text-zinc-900 animate-fade-up">
-      <header className="border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
+    <main className="min-h-screen text-slate-800">
+      {/* Glass header */}
+      <header className="glass-nav sticky top-0 z-30">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link href="/" className="text-xl font-bold tracking-tight">
-            DesignedPrice<span className="text-zinc-400">.</span>
+          <Link href="/" className="text-xl font-bold tracking-tight text-slate-800">
+            DesignedPrice<span className="text-violet-400">.</span>
           </Link>
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
@@ -89,13 +89,13 @@ export function AppShell() {
                 {user?.displayName || user?.email || "Your account"}
               </p>
               {user?.displayName && (
-                <p className="text-xs text-zinc-500">{user.email}</p>
+                <p className="text-xs text-slate-500">{user.email}</p>
               )}
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white/90 px-3 py-2 text-sm font-medium hover:bg-zinc-50"
+              className="inline-flex items-center gap-2 rounded-full glass px-3.5 py-2 text-sm font-medium hover:bg-white/60 transition"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Log out</span>
@@ -105,27 +105,28 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <section className="mb-8 animate-fade-up-delay-1">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+        <section className="mb-8 animate-fade-up">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-violet-500/80">
             Your clothing intelligence workspace
           </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-slate-900">
             Identify it. Value it. Wear it.
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 sm:text-base">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
             Discover brands, garment details, estimated market values, and
             comparable listings for vintage, streetwear, and designer pieces.
           </p>
         </section>
 
-        <nav className="mb-8 flex gap-2 border-b border-zinc-200/80 animate-fade-up-delay-1">
+        {/* Glass tabs */}
+        <nav className="mb-8 flex gap-2 glass rounded-2xl p-1.5 w-fit animate-fade-up-delay-1">
           <button
             type="button"
             onClick={() => setTab("scan")}
-            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold ${
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
               tab === "scan"
-                ? "border-zinc-900 text-zinc-900"
-                : "border-transparent text-zinc-500 hover:text-zinc-900"
+                ? "bg-white/80 text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
             }`}
           >
             <ScanLine className="h-4 w-4" />
@@ -134,10 +135,10 @@ export function AppShell() {
           <button
             type="button"
             onClick={() => setTab("history")}
-            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold ${
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
               tab === "history"
-                ? "border-zinc-900 text-zinc-900"
-                : "border-transparent text-zinc-500 hover:text-zinc-900"
+                ? "bg-white/80 text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
             }`}
           >
             <Clock3 className="h-4 w-4" />
@@ -149,7 +150,7 @@ export function AppShell() {
           {tab === "scan" ? <UploadForm /> : <HistoryPanel />}
         </div>
 
-        <footer className="mt-16 border-t border-zinc-200/80 pt-6 text-center text-xs text-zinc-500">
+        <footer className="mt-16 border-t border-white/40 pt-6 text-center text-xs text-slate-500">
           DesignedPrice · AI-assisted garment identification and market estimates
         </footer>
       </div>
@@ -201,83 +202,79 @@ function AuthScreen({
   }
 
   return (
-    <main className="min-h-screen animate-fade-up">
-      <div className="grid min-h-screen lg:grid-cols-2">
-        <section className="relative flex flex-col justify-between overflow-hidden bg-zinc-950 px-6 py-8 text-white sm:px-12 lg:px-16 lg:py-12">
-          {/* subtle animated glow on auth panel */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-20 top-1/4 h-72 w-72 rounded-full bg-white/5 blur-3xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-16 bottom-1/4 h-64 w-64 rounded-full bg-zinc-500/10 blur-3xl"
-          />
-
+    <main className="min-h-screen flex items-center justify-center p-4 sm:p-8">
+      {/* Floating glass card */}
+      <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-0 glass-panel rounded-[2rem] overflow-hidden shadow-2xl animate-fade-up">
+        {/* Left marketing panel */}
+        <section className="relative flex flex-col justify-between px-8 py-10 sm:px-12 lg:py-14 text-slate-800">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-400/20 via-fuchsia-300/10 to-sky-300/20 pointer-events-none" />
           <Link href="/" className="relative text-xl font-bold tracking-tight">
-            DesignedPrice<span className="text-zinc-500">.</span>
+            DesignedPrice<span className="text-violet-500">.</span>
           </Link>
 
-          <div className="relative mx-auto my-12 max-w-lg lg:my-0">
-            <div className="mb-6 inline-flex rounded-2xl border border-white/15 bg-white/5 p-4">
-              <ScanLine className="h-8 w-8" />
+          <div className="relative my-10 lg:my-0 max-w-md">
+            <div className="mb-6 inline-flex rounded-2xl glass p-4">
+              <ScanLine className="h-8 w-8 text-violet-500" />
             </div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.25em] text-violet-500/80">
               Know what you own
             </p>
-            <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-              Every piece has a story. Find its value.
+            <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+              Every piece has a story.
+              <br />
+              Find its value.
             </h1>
-            <p className="mt-5 max-w-md leading-7 text-zinc-400">
+            <p className="mt-5 leading-7 text-slate-600">
               Identify vintage clothing, explore streetwear brands, estimate
               market prices, and keep your discoveries in one place.
             </p>
 
-            <div className="mt-8 space-y-4 text-sm text-zinc-300">
+            <div className="mt-8 space-y-3 text-sm text-slate-600">
               <div className="flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-zinc-400" />
+                <ShieldCheck className="h-5 w-5 text-violet-400" />
                 Personal scan history
               </div>
               <div className="flex items-center gap-3">
-                <ScanLine className="h-5 w-5 text-zinc-400" />
+                <ScanLine className="h-5 w-5 text-violet-400" />
                 AI-assisted garment analysis
               </div>
               <div className="flex items-center gap-3">
-                <Clock3 className="h-5 w-5 text-zinc-400" />
+                <Clock3 className="h-5 w-5 text-violet-400" />
                 Revisit your previous valuations
               </div>
             </div>
           </div>
 
-          <p className="relative text-xs text-zinc-500">
+          <p className="relative text-xs text-slate-500">
             Estimates are indicative, not guaranteed sale prices.
           </p>
         </section>
 
-        <section className="flex items-center justify-center px-5 py-12 sm:px-10 animate-fade-up-delay-1">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white/90 p-6 shadow-sm backdrop-blur-sm sm:p-8">
+        {/* Right auth form */}
+        <section className="flex items-center justify-center px-6 py-10 sm:px-10 bg-white/30 backdrop-blur-sm">
+          <div className="w-full max-w-md">
             <div className="mb-8">
-              <p className="text-sm font-medium text-zinc-500">
+              <p className="text-sm font-medium text-slate-500">
                 Welcome to DesignedPrice
               </p>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight">
+              <h2 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight">
                 {mode === "login" ? "Welcome back" : "Create your account"}
               </h2>
-              <p className="mt-3 text-sm leading-6 text-zinc-600">
+              <p className="mt-3 text-sm leading-6 text-slate-600">
                 {mode === "login"
                   ? "Sign in to analyze garments and access your scan history."
                   : "Create an account to save and revisit your garment scans."}
               </p>
             </div>
 
-            <div className="mb-6 grid grid-cols-2 rounded-xl bg-zinc-100 p-1">
+            <div className="mb-6 grid grid-cols-2 rounded-2xl glass p-1">
               <button
                 type="button"
                 onClick={() => switchMode("login")}
-                className={`rounded-lg px-4 py-2.5 text-sm font-semibold ${
+                className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                   mode === "login"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-900"
+                    ? "bg-white/90 text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
                 }`}
               >
                 Sign in
@@ -285,10 +282,10 @@ function AuthScreen({
               <button
                 type="button"
                 onClick={() => switchMode("register")}
-                className={`rounded-lg px-4 py-2.5 text-sm font-semibold ${
+                className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                   mode === "register"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-900"
+                    ? "bg-white/90 text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
                 }`}
               >
                 Create account
@@ -298,21 +295,17 @@ function AuthScreen({
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
                 <div>
-                  <label
-                    htmlFor="displayName"
-                    className="mb-1.5 block text-sm font-medium"
-                  >
-                    Display name{" "}
-                    <span className="text-zinc-400">(optional)</span>
+                  <label htmlFor="displayName" className="mb-1.5 block text-sm font-medium">
+                    Display name <span className="text-slate-400">(optional)</span>
                   </label>
                   <input
                     id="displayName"
                     name="displayName"
                     autoComplete="name"
                     value={displayName}
-                    onChange={(event) => setDisplayName(event.target.value)}
+                    onChange={(e) => setDisplayName(e.target.value)}
                     maxLength={80}
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                    className="w-full rounded-2xl glass-input px-4 py-3"
                     placeholder="Your name"
                     disabled={busy}
                   />
@@ -320,10 +313,7 @@ function AuthScreen({
               )}
 
               <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1.5 block text-sm font-medium"
-                >
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
                   Email address
                 </label>
                 <input
@@ -334,37 +324,30 @@ function AuthScreen({
                   required
                   maxLength={254}
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-2xl glass-input px-4 py-3"
                   placeholder="you@example.com"
                   disabled={busy}
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1.5 block text-sm font-medium"
-                >
+                <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
                   Password
                 </label>
                 <input
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete={
-                    mode === "login" ? "current-password" : "new-password"
-                  }
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
                   required
                   minLength={mode === "register" ? 10 : 1}
                   maxLength={128}
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-2xl glass-input px-4 py-3"
                   placeholder={
-                    mode === "register"
-                      ? "At least 10 characters"
-                      : "Your password"
+                    mode === "register" ? "At least 10 characters" : "Your password"
                   }
                   disabled={busy}
                 />
@@ -373,7 +356,7 @@ function AuthScreen({
               {error && (
                 <div
                   role="alert"
-                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  className="rounded-2xl border border-red-200/60 bg-red-50/70 px-4 py-3 text-sm text-red-700 backdrop-blur-sm"
                 >
                   {error}
                 </div>
@@ -382,7 +365,7 @@ function AuthScreen({
               <button
                 type="submit"
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="glass-btn flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold"
               >
                 {busy ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -400,7 +383,7 @@ function AuthScreen({
               </button>
             </form>
 
-            <p className="mt-6 text-center text-xs leading-5 text-zinc-500">
+            <p className="mt-6 text-center text-xs leading-5 text-slate-500">
               By continuing, you agree to use market valuations as estimates.
               Keep your password private.
             </p>
@@ -419,7 +402,6 @@ function HistoryPanel() {
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
       setScans(await getScanHistory());
     } catch (err) {
@@ -430,50 +412,54 @@ function HistoryPanel() {
   }, []);
 
   useEffect(() => {
-    // Intentional: load the user-specific history when this panel mounts.
+    // Intentional: load history once on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refresh();
+    refresh();
   }, [refresh]);
 
-  return (
-    <section className="mx-auto max-w-4xl">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold">Your scan history</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Your latest saved garment analyses.
-          </p>
-        </div>
+  if (loading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-7 w-7 animate-spin text-violet-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="glass rounded-2xl p-6 text-center">
+        <p className="text-sm text-red-600">{error}</p>
         <button
           type="button"
-          onClick={() => void refresh()}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white/90 px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-50"
+          onClick={refresh}
+          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-violet-600 hover:underline"
         >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className="h-4 w-4" />
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <section>
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Your scan history</h2>
+        <button
+          type="button"
+          onClick={refresh}
+          className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-sm font-medium hover:bg-white/60 transition"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
           Refresh
         </button>
       </div>
 
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-12 text-sm text-zinc-500 backdrop-blur-sm">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading your scans…
-        </div>
-      ) : !error && scans.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white/90 px-6 py-14 text-center backdrop-blur-sm">
-          <ScanLine className="mx-auto h-8 w-8 text-zinc-400" />
+      {scans.length === 0 ? (
+        <div className="glass rounded-2xl py-16 text-center">
+          <ScanLine className="mx-auto h-10 w-10 text-violet-300" />
           <h3 className="mt-4 font-semibold">No scans yet</h3>
-          <p className="mt-2 text-sm text-zinc-500">
+          <p className="mt-2 text-sm text-slate-500">
             Your completed analyses will appear here after your first scan.
           </p>
         </div>
@@ -482,31 +468,31 @@ function HistoryPanel() {
           {scans.map((scan) => (
             <article
               key={scan.id}
-              className="flex gap-4 rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-5"
+              className="flex gap-4 rounded-2xl glass p-4 sm:p-5 hover:bg-white/55 transition"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={scan.imageUrl}
                 alt="Scanned garment"
-                className="h-24 w-24 shrink-0 rounded-xl bg-zinc-100 object-cover sm:h-28 sm:w-28"
+                className="h-24 w-24 shrink-0 rounded-xl bg-white/40 object-cover sm:h-28 sm:w-28"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold">
                     {scan.identification.brand || "Unknown brand"}
                   </h3>
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                  <span className="rounded-full bg-white/60 px-2 py-0.5 text-xs text-slate-600">
                     {scan.status.replaceAll("_", " ").toLowerCase()}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-zinc-600">
+                <p className="mt-1 text-sm text-slate-600">
                   {scan.identification.garmentType || "Garment type unavailable"}
                 </p>
-                <p className="mt-2 text-xs text-zinc-400">
+                <p className="mt-2 text-xs text-slate-400">
                   {new Date(scan.createdAt).toLocaleString()}
                 </p>
                 {scan.valuation && (
-                  <p className="mt-2 text-sm font-semibold text-zinc-900">
+                  <p className="mt-2 text-sm font-semibold text-slate-900">
                     {new Intl.NumberFormat(undefined, {
                       style: "currency",
                       currency: scan.valuation.currency,
@@ -526,7 +512,7 @@ function HistoryPanel() {
         </div>
       )}
 
-      <p className="mt-5 text-xs text-zinc-500">
+      <p className="mt-5 text-xs text-slate-500">
         The API currently returns up to 50 of your most recent scans.
       </p>
     </section>
